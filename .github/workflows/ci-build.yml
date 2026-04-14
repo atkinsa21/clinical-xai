@@ -33,7 +33,7 @@ jobs:
         pip install pytest pytest-cov ruff
     - name: Lint with ruff
       run: |
-        ruff check --output-format=github src/ tests/
+        ruff check --output-format=github
     - name: Test with pytest
       run: |
-        pytest tests/
+        pytest
