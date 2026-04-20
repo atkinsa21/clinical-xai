@@ -1,3 +1,53 @@
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project]
+name = "clinicalxai"
+version = "0.1.0"
+description = "An ethical eXplainable AI (XAI) tool for clinical model analysis and reporting."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  {name = "Ally Atkins", email = "ally.atkins2000@gmail.com"},
+]
+dependencies = [
+  "numpy",
+  "pandas",
+  "shap",
+  "onnxruntime",
+  "jinja2",
+  "matplotlib",
+  "seaborn",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+  "pytest-cov",
+  "ruff",
+  "mypy",
+  "scikit-learn",
+  "skl2onnx",
+  "xgboost-cpu",
+  "onnxmltools",
+]
+
+[project.scripts]
+clinicalxai = "clinicalxai.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/atkinsa21/clinical-xai"
+Repository = "https://github.com/atkinsa21/clinical-xai"
+Issues = "https://github.com/atkinsa21/clinical-xai/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clinicalxai"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/clinicalxai/templates" = "clinicalxai/templates"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
