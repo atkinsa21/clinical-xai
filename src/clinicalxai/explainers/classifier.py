@@ -11,6 +11,17 @@ import shap
 from clinicalxai.explainers.base import BaseExplainer
 from clinicalxai.model import OnnxModel
 
+from sklearn.metrics import (
+    roc_auc_score,
+    accuracy_score,
+    recall_score,
+    precision_score,
+    f1_score,
+    roc_auc_score,
+)
+from sklearn.metrics import confusion_matrix as sk_confusion_matrix
+from sklearn.metrics import roc_curve as sk_roc_curve
+
 class ClassifierExplainer(BaseExplainer):
     def __init__(
             self, 
@@ -46,4 +57,31 @@ class ClassifierExplainer(BaseExplainer):
     
     @cached_property
     def metrics(self) -> dict[str, float]:
-        raise NotImplementedError("Metrics computation not implemented yet.")
+        y_pred = self.predictions
+        y_proba = self._positive_class_probabilities
+        return {
+            "accuracy": accuracy_score(self.y, y_pred),
+            "precision": precision_score(self.y, y_pred),
+            "recall": recall_score(self.y, y_pred),
+            "f1_score": f1_score(self.y, y_pred),
+            "roc_auc": roc_auc_score(self.y, y_proba),
+        }
+    
+    @cached_property
+    def confusion_matrix(self) -> np.ndarray:
+        return sk_confusion_matrix(self.y, self.predictions)
+    
+    @cached_property
+    def roc_curve(self) -> dict[str, np.ndarray]:
+        y_proba = self._positive_class_probabilities
+        fpr, tpr, thresholds = sk_roc_curve(self.y, y_proba)
+        return {"fpr": fpr, "tpr": tpr, "thresholds": thresholds}
+    
+    @cached_property
+    def _positive_class_probabilities(self) -> np.ndarray:
+        """
+        Get the predicted probabilities for the positive class.
+        """
+        return self.model.predict_proba(self.X)[:, 1]
+    
+
