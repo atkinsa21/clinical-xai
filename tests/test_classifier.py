@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import shap
 from unittest.mock import patch
 
 from clinicalxai.explainers.classifier import ClassifierExplainer
@@ -28,7 +29,7 @@ def test_classifier_explainer_uses_provided_labels(onnx_binary_classifier):
 
     custom_labels = ["negative", "positive"]
     explainer = ClassifierExplainer(model, fx.X_test, fx.y_test, labels=custom_labels)
-    
+
     assert explainer.labels == custom_labels
 
 def test_predictions_returns_array_of_correct_length(onnx_binary_classifier):
@@ -53,3 +54,51 @@ def test_predictions_property_caches_results(onnx_binary_classifier):
 
         assert np.array_equal(preds1, preds2)
         mock_predict.assert_called_once_with(fx.X_test)
+
+@pytest.mark.slow(reason="SHAP explainer can be slow to compute")
+def test_shap_values_returns_explanation(onnx_binary_classifier):
+    fx = onnx_binary_classifier
+    model = OnnxModel(fx.model_path)
+    explainer = ClassifierExplainer(model, fx.X_test.iloc[:5], fx.y_test.iloc[:5])
+
+    shap_values = explainer.shap_values
+
+    assert isinstance(shap_values, shap.Explanation)
+
+@pytest.mark.slow(reason="SHAP explainer can be slow to compute")
+def test_shap_values_shape_matches_input(onnx_binary_classifier):
+    fx = onnx_binary_classifier
+    model = OnnxModel(fx.model_path)
+    explainer = ClassifierExplainer(model, fx.X_test.iloc[:5], fx.y_test.iloc[:5])
+
+    shap_values = explainer.shap_values
+
+    assert shap_values.values.shape[0] == len(fx.X_test.iloc[:5])
+    assert shap_values.values.shape[1] == fx.X_test.shape[1]
+    assert shap_values.shape[2] == 2  # binary classification should have 2 output classes
+
+@pytest.mark.slow(reason="SHAP explainer can be slow to compute")
+def test_shap_values_caches_results(onnx_binary_classifier):
+    fx = onnx_binary_classifier
+    model = OnnxModel(fx.model_path)
+    explainer = ClassifierExplainer(model, fx.X_test.iloc[:5], fx.y_test.iloc[:5])
+
+    _ = explainer.shap_values  # compute once to cache
+    with patch.object(shap.Explainer, "__call__", wraps=shap.Explainer.__call__) as mock_explainer_call:
+        _ = explainer.shap_values  # access again should use cache
+        mock_explainer_call.assert_not_called()
+
+@pytest.mark.slow(reason="SHAP explainer can be slow to compute")
+def test_shap_values_invariant_for_positive_class(onnx_binary_classifier):
+    """
+    Test that the sum of SHAP values plus base value approximates the predicted probability for the positive class.
+    """
+    fx = onnx_binary_classifier
+    model = OnnxModel(fx.model_path)
+    explainer = ClassifierExplainer(model, fx.X_test.iloc[:5], fx.y_test.iloc[:5])
+
+    shap_values = explainer.shap_values
+    reconstructed = shap_values.values[..., 1].sum(axis=1) +shap_values.base_values[..., 1]
+    expected = model.predict_proba(fx.X_test.iloc[:5])[:, 1]
+
+    np.testing.assert_allclose(reconstructed, expected, rtol=0.05)
