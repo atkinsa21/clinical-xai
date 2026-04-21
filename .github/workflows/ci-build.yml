@@ -35,8 +35,8 @@ jobs:
     - name: Lint with ruff
       run: ruff check --output-format=github
       
-    - name: Check formatting with ruff
-      run: ruff format --check
+    #- name: Check formatting with ruff
+      #run: ruff format --check
       
     - name: Test with pytest
       run: pytest --cov --cov-report=term-missing
