@@ -7,6 +7,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
+import shap
 
 
 class BaseExplainer(ABC):
@@ -19,7 +20,7 @@ class BaseExplainer(ABC):
 
     @property
     @abstractmethod
-    def shap_values(self) -> np.ndarray:
+    def shap_values(self) -> shap.Explanation:
         """SHAP values for the input data."""
 
     @property
