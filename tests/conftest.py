@@ -8,8 +8,11 @@ import pytest
 from sklearn.linear_model import LogisticRegression
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
+import shap
 
 from clinicalxai.datasets import load_diabetes_dataset
+from clinicalxai.model import OnnxModel
+from clinicalxai.explainers.classifier import ClassifierExplainer
 
 
 @dataclass(frozen=True)
@@ -43,3 +46,21 @@ def onnx_binary_classifier(tmp_path_factory: pytest.TempPathFactory) -> OnnxFixt
         y_train=y_train,
         y_test=y_test,
     )
+
+
+@pytest.fixture(scope="session")
+def explainer(onnx_binary_classifier: OnnxFixture) -> ClassifierExplainer:
+    fx = onnx_binary_classifier
+    model = OnnxModel(fx.model_path)
+    return ClassifierExplainer(model, fx.X_test, fx.y_test)
+
+
+@pytest.fixture(scope="session")
+def shap_explanation(
+    onnx_binary_classifier: OnnxFixture,
+) -> tuple[shap.Explanation, pd.DataFrame]:
+    fx = onnx_binary_classifier
+    model = OnnxModel(fx.model_path)
+    X_small = fx.X_test.iloc[:5]
+    explainer = ClassifierExplainer(model, X_small, fx.y_test.iloc[:5])
+    return explainer.shap_values, X_small
