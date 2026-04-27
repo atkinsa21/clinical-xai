@@ -15,6 +15,22 @@ from clinicalxai.explainers.base import BaseExplainer
 from clinicalxai.explainers.classifier import ClassifierExplainer
 
 
+def get_metrics_labels(explainer: BaseExplainer) -> dict[str, str]:
+    """
+    Get human-readable labels for the metrics in the explainer's metrics dict.
+    """
+    metric_label_map = {
+        "accuracy": "Accuracy",
+        "precision": "Precision",
+        "recall": "Recall",
+        "f1_score": "F1 Score",
+        "roc_auc": "ROC AUC",
+    }
+    return {
+        metric: metric_label_map.get(metric, metric) for metric in explainer.metrics
+    }
+
+
 def generate_report(
     explainer: BaseExplainer,
     output_path: str | Path,
@@ -94,6 +110,7 @@ def generate_report(
         generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         clinicalxai_version=__version__,
         metrics=explainer.metrics,
+        metric_labels=get_metrics_labels(explainer),
         shap_bar=shap_bar,
         shap_beeswarm=shap_beeswarm,
         shap_waterfall=shap_waterfall,

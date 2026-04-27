@@ -200,7 +200,7 @@ def test_metrics_included_in_report(mock_explainer, patched_plots, tmp_path):
     html = path.read_text(encoding="utf-8")
     assert "Metrics Summary Table" in html
     assert "Accuracy" in html
-    assert "Roc Auc" in html
+    assert "ROC AUC" in html
     assert "0.85" in html
     assert "0.91" in html
 
