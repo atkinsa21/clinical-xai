@@ -42,12 +42,11 @@ def test_predictions_returns_array_of_correct_length(onnx_model, classifier_expl
 
 
 def test_predictions_property_caches_results(onnx_model, classifier_explainer):
-    _, fx = onnx_model
+    model, fx = onnx_model
     explainer = classifier_explainer
+    explainer.__dict__.pop("predictions", None)  # Clear cache if exists
 
-    with patch.object(
-        explainer.model, "predict", wraps=explainer.model.predict
-    ) as mock_predict:
+    with patch.object(model, "predict", wraps=model.predict) as mock_predict:
         preds1 = explainer.predictions
         preds2 = explainer.predictions
 
