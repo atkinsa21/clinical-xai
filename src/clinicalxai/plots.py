@@ -23,6 +23,10 @@ import shap
 
 from plotly.offline import get_plotlyjs
 
+SHAP_BLUE = "#1E88E5"
+SHAP_RED = "#FF0051"
+SHAP_COLORSCALE = [[0.0, SHAP_BLUE], [1.0, SHAP_RED]]
+
 
 def default_patient_index(predictions: np.ndarray, positive_class: int = 1) -> int:
     """
@@ -62,7 +66,10 @@ def shap_bar_html(
             x=mean_abs_shap,
             y=[shap_values.feature_names[idx] for idx in top_indices],
             orientation="h",
-            marker_color="rgba(255, 0, 0, 0.6)",
+            marker_color="rgba(255, 0, 81, 0.85)",  # SHAP_RED with some transparency
+            text=[f"+{val:.3f}" for val in mean_abs_shap],
+            textposition="outside",
+            cliponaxis=False,  # Allow text to overflow axis limits
         )
     )
     fig.update_layout(
@@ -97,6 +104,7 @@ def shap_beeswarm_html(
     X: pd.DataFrame,
     positive_class: int = 1,
     top_n: int = 10,
+    max_display_samples=2000,
 ) -> str:
     """
     Generate HTML for a SHAP summary beeswarm plot for the positive class.
@@ -106,23 +114,29 @@ def shap_beeswarm_html(
     feature_names = np.asarray(shap_values.feature_names)[top_indices]
     generator = np.random.default_rng(0)
     sample_n = shap_values.values.shape[0]
+    if sample_n > max_display_samples:
+        generator = np.random.default_rng(0)
+        sample_idx = generator.choice(sample_n, size=max_display_samples, replace=False)
+    else:
+        sample_idx = np.arange(sample_n)
 
     fig = go.Figure()
     for row, feature_idx in enumerate(top_indices):
-        raw_values = X.iloc[:, feature_idx].to_numpy()
+        raw_values = np.round(X.iloc[sample_idx, feature_idx].to_numpy(), 4)
         fig.add_trace(
             go.Scatter(
-                x=shap_values.values[:, feature_idx, positive_class],
-                y=row
-                + generator.uniform(
-                    -0.3, 0.3, size=sample_n
+                x=np.round(
+                    shap_values.values[sample_idx, feature_idx, positive_class], 4
+                ),
+                y=np.round(
+                    row + generator.uniform(-0.3, 0.3, size=len(sample_idx)), 4
                 ),  # Jitter y-axis for beeswarm effect
                 mode="markers",
                 marker=dict(
                     size=6,
                     opacity=0.6,
                     color=_normalize_feature_values(raw_values),
-                    colorscale="RdBu_r",
+                    colorscale=SHAP_COLORSCALE,
                     cmin=0,
                     cmax=1,
                     showscale=(row == 0),
@@ -173,6 +187,7 @@ def shap_waterfall_html(
 
     contributions = shap_values.values[patient_index, :, positive_class]
     patient_base = shap_values.base_values[patient_index, positive_class]
+    fx_value = contributions.sum() + patient_base
     feature_names = np.asarray(shap_values.feature_names)
     order = np.argsort(np.abs(contributions))[::-1]
     top_indices, rest = order[:top_n], order[top_n:]
@@ -188,18 +203,36 @@ def shap_waterfall_html(
             + feature_names[top_indices].tolist()
             + ([f"{rest.size} Other Features"] if rest.size > 0 else []),
             orientation="h",
-            increasing=dict(marker=dict(color="#ff0d57")),
-            decreasing=dict(marker=dict(color="#1e88e5")),
+            increasing=dict(marker=dict(color=SHAP_RED)),
+            decreasing=dict(marker=dict(color=SHAP_BLUE)),
             totals=dict(marker=dict(color="#7f7f7f")),
             connector=dict(line=dict(color="rgba(0,0,0,0.2)")),
         )
     )
     fig.update_layout(
         title=f"SHAP Waterfall for Patient at Index {patient_index}",
-        xaxis_title="Feature",
-        yaxis_title="SHAP Value",
+        xaxis_title="Cumulative SHAP Contribution f(x)",
+        yaxis_title="Feature",
         margin=dict(l=50, r=20, t=50, b=50),
         height=400,
+    )
+    fig.add_annotation(
+        x=patient_base,
+        y=-0.5,
+        xref="x",
+        yref="y",
+        text=f"E[f(x)] = {patient_base:.3f}",
+        showarrow=False,
+        xanchor="center",
+    )
+    fig.add_annotation(
+        x=fx_value,
+        y=len(top_indices) + (1 if rest.size > 0 else 0) - 0.5,
+        xref="x",
+        yref="y",
+        text=f"f(x) = {fx_value:.3f}",
+        showarrow=False,
+        xanchor="center",
     )
     return pio.to_html(fig, full_html=False, include_plotlyjs=False)
 

@@ -114,6 +114,14 @@ def test_shap_beeswarm_html_returns_html_div(shap_explanation):
     assert expected_title in html  # Check that the title is included in the HTML
 
 
+def test_shap_beeswarm_html_subsamples_when_oversize(shap_explanation):
+    shap_values, X = shap_explanation
+    html = plots.shap_beeswarm_html(
+        shap_values, X, positive_class=1, top_n=5, max_display_samples=10
+    )
+    assert len(html) < 200_000
+
+
 @pytest.mark.slow(reason="Plot generation can be time-consuming.")
 def test_shap_waterfall_html_returns_html_div(shap_explanation):
     shap_values, _ = shap_explanation
