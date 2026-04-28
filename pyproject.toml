@@ -12,6 +12,27 @@ license = "MIT"
 authors = [
   {name = "Ally Atkins", email = "ally.atkins2000@gmail.com"},
 ]
+keywords = [
+  "machine learning",
+  "xai",
+  "explainability",
+  "shap",
+  "clinical",
+  "ethical",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Scientific Research",
+  "Intended Audience :: Education",
+  "Intended Audience :: Healthcare Industry",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Scientific/Engineering :: Medical Science Apps",
+]
 dependencies = [
   "numpy",
   "pandas",
@@ -21,6 +42,7 @@ dependencies = [
   "matplotlib",
   "seaborn",
   "plotly",
+  "scikit-learn",
 ]
 
 [project.optional-dependencies]
@@ -29,7 +51,6 @@ test = [
   "pytest-cov",
   "ruff",
   "mypy",
-  "scikit-learn",
   "skl2onnx",
   "xgboost-cpu",
   "onnxmltools",
@@ -41,6 +62,7 @@ clinicalxai = "clinicalxai.cli:main"
 [project.urls]
 Homepage = "https://github.com/atkinsa21/clinical-xai"
 Repository = "https://github.com/atkinsa21/clinical-xai"
+Documentation = "https://github.com/atkinsa21/clinical-xai"
 Issues = "https://github.com/atkinsa21/clinical-xai/issues"
 
 [tool.hatch.version]
