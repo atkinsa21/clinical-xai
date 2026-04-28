@@ -71,9 +71,6 @@ path = "src/clinicalxai/__init__.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/clinicalxai"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"src/clinicalxai/templates" = "clinicalxai/templates"
-
 [tool.ruff]
 line-length = 88
 target-version = "py311"
