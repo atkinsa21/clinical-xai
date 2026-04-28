@@ -22,7 +22,7 @@ keywords = [
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
-  "Intended Audience :: Scientific Research",
+  "Intended Audience :: Science/Research",
   "Intended Audience :: Education",
   "Intended Audience :: Healthcare Industry",
   "Programming Language :: Python :: 3",
