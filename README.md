@@ -32,9 +32,9 @@ from skl2onnx import convert_sklearn
 clf = LogisticRegression(max_iter=1000).fit(X_train, y_train)
 initial_types = [("input", FloatTensorType([None, X_train.shape[1]]))]
 
-onnx_model = convert_sklearn(
-    clf, initial_types=initial_types, options={id(clf): {"zipmap": False}}
-)
+onnx_model = convert_sklearn(clf,
+                             initial_types=initial_types,
+                             options={id(clf): {"zipmap": False}})
 
 model_path = Path(__file__).resolve().parent / "diabetes_clf.onnx" # path to save .onnx file
 model_path.write_bytes(onnx_model.SerializeToString())
@@ -46,12 +46,11 @@ from clinicalxai.model import OnnxModel
 from clinicalxai.explainers.classifier import ClassifierExplainer
 
 model = OnnxModel(model_path) # /your/path/to/<model>.onnx
-explainer = ClassifierExplainer(
-    model_path="model.onnx",
-    X_test=X_test,
-    y_test=y_test,
-    feature_names=[...],
-)
+
+explainer = ClassifierExplainer(model,
+                                X_test,
+                                y_test,
+                                labels=["No Diabetes", "Diabetes"])
 explainer.to_html("report.html")
 ```
 To render your explainability report to html:
