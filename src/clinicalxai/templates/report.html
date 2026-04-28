@@ -5,20 +5,91 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{ title }}</title>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            margin: 2em auto;
+            max-width: 1100px;
+            padding: 0 1em;
+            line-height: 1.5;
+            color: #222;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .layout-container {
+            display: flex; /* Positions sidebar and content side-by-side */
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .sidebar {
+            width: 250px;
+            position: sticky; /* Makes the element stay in view */
+            top: 20px;        /* Distance from top of viewport when stuck */
+            height: fit-content;
+            align-self: flex-start;
+        }
+        /* Optional: Active section highlighting */
+        .toc-list li a:hover {
+            color: #007bff;
+        }
+        .perf-row {
+            display: flex; gap: 1.5em; flex-wrap: wrap;
+        }
+        .perf-cell {
+            flex: 1 1 300px; min-width: 0;
+        }
+        .perf-cell img {
+            width: 100%; height: auto; display: block;
+        }
+        tr.severity-info {
+            background-color: #dff0d8; /* Light green */
+        }
+        tr.severity-warning {
+            background-color: #fcf8e3; /* Light yellow */
+        }
+        tr.severity-high {
+            background-color: #f2dede; /* Light red */
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
 </head>
 
 <body>
-<h1>{{ title }}</h1>
-<h1>Jump To...</h1>
-<ul>
-    <li><a href="#metrics">Metrics Summary</a></li>
-    <li><a href="#performance">Performance Overview</a></li>
-    <li><a href="#global-feature-importance">Global Feature Importance</a></li>
-    <li><a href="#local-feature-importance">Local Feature Importance</a></li>
-    <li><a href="#ethical-flags">Ethical Flags</a></li>
-</ul>
+<div class="layout-container">
+    <nav class="sidebar">
+        <h2>Contents</h2>
+        <ol class="toc-list">
+            <li><a href="#metrics"><strong>Metrics Summary Table</strong></a></li>
+            <li><a href="#performance"><strong>Performance Overview</strong></a></li>
+            <li><a href="#global-feature-importance"><strong>Global Feature Importance</strong></a></li>
+            <li><a href="#local-feature-importance"><strong>Local Feature Importance</strong></a></li>
+            <li><a href="#ethical-flags"><strong>Ethical Flags</strong></a></li>
+        </ol>
+    </nav>
+</div>
 
-<h1 id="metrics">Metrics Summary Table</h1>
+<h2 id="metrics">Metrics Summary Table</h2>
 <table style="width: 50%; border-collapse: collapse; border: 1px solid black;">
     <thead>
         <tr>
@@ -27,45 +98,47 @@
         </tr>
     </thead>
     <tbody>
-        {% for metric, value in metrics.items() %}
+        {% for metric, label in metric_labels.items() %}
         <tr>
-            <td>{{ metric | replace('_', ' ') | title }}</td>
-            <td>{{ "%.2f"|format(value) }}</td>
+            <td>{{ label }}</td>
+            <td>{{ "%.2f"|format(metrics[metric]) }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
-<h1 id="performance">Performance Plots - Confusion Matrix & ROC Curve</h1>
-<div>
-    <h2>Confusion Matrix</h2>
-    <img src="{{ confusion_matrix | safe }}" alt="Confusion Matrix" />
-</div>
-<div>
-    <h2>ROC Curve</h2>
-    <img src="{{ roc_curve | safe }}" alt="ROC Curve" />
+<h2 id="performance">Performance Overview</h2>
+<div class="perf-row">
+    <div class="perf-cell">
+        <h3>Confusion Matrix</h3>
+        <img src="{{ confusion_matrix | safe }}" alt="Confusion Matrix" />
+    </div>
+    <div class="perf-cell">
+        <h3>ROC Curve</h3>
+        <img src="{{ roc_curve | safe }}" alt="ROC Curve" />
+    </div>
 </div>
 
-<h1 id="global-feature-importance">Global Feature Importance</h1>
+<h2 id="global-feature-importance">Global Feature Importance</h2>
 <div>
-    <h2>SHAP Bar Plot</h2>
+    <h3>SHAP Bar Plot</h3>
     {{ shap_bar | safe }}
 </div>
 <div>
-    <h2>SHAP Beeswarm Plot</h2>
+    <h3>SHAP Beeswarm Plot</h3>
     {{ shap_beeswarm | safe }}
 </div>
 
-<h1 id="local-feature-importance">Local Feature Importance</h1>
+<h2 id="local-feature-importance">Local Feature Importance</h2>
 <div>
     <p>Showing explanation for patient at index {{ patient_index }}</p>
-    <h2>SHAP Waterfall Plot</h2>
+    <h3>SHAP Waterfall Plot</h3>
     {{ shap_waterfall | safe }}
 </div>
 
-<h1 id="ethical-flags">Ethical Flags</h1>
+<h2 id="ethical-flags">Ethical Flags</h2>
 {% if ethical_flags %}
-<table style="width: 50%; border-collapse: collapse; border: 1px solid black;">
+<table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
     <thead>
         <tr>
             <th>Feature</th>

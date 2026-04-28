@@ -11,7 +11,7 @@ import pytest
 from clinicalxai import generate_report as gr_module
 from clinicalxai.explainers.base import BaseExplainer
 from clinicalxai.explainers.classifier import ClassifierExplainer
-from clinicalxai.generate_report import generate_report
+from clinicalxai.generate_report import render_report
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ def rendered_html(
     classifier_explainer, tmp_path_factory: pytest.TempPathFactory
 ) -> tuple[Path, str]:
     out = tmp_path_factory.mktemp("report") / "report.html"
-    path = generate_report(classifier_explainer, out, title="Integration Test Report")
+    path = render_report(classifier_explainer, out, title="Integration Test Report")
     return path, path.read_text(encoding="utf-8")
 
 
@@ -86,7 +86,7 @@ def test_raises_not_implemented_error_for_unsupported_explainer(
     base_explainer, tmp_path
 ):
     with pytest.raises(NotImplementedError, match="ClassifierExplainer"):
-        generate_report(base_explainer, tmp_path / "report.html")
+        render_report(base_explainer, tmp_path / "report.html")
 
 
 @pytest.mark.parametrize(
@@ -102,7 +102,7 @@ def test_path_handling_and_title(
     mock_explainer, patched_plots, tmp_path, rel_path, title
 ):
     out_path = tmp_path / rel_path
-    result_path = generate_report(mock_explainer, out_path, title=title)
+    result_path = render_report(mock_explainer, out_path, title=title)
 
     assert result_path == out_path
     assert title in out_path.read_text(encoding="utf-8")
@@ -111,7 +111,7 @@ def test_path_handling_and_title(
 def test_plot_functions_called_with_expected_arguments(
     mock_explainer, patched_plots, tmp_path
 ):
-    generate_report(mock_explainer, tmp_path / "r1.html", top_n_features=5)
+    render_report(mock_explainer, tmp_path / "r1.html", top_n_features=5)
 
     assert patched_plots.shap_bar_html.call_args.kwargs["top_n"] == 5
     assert patched_plots.shap_beeswarm_html.call_args.kwargs["top_n"] == 5
@@ -149,13 +149,13 @@ def test_feature_names_retrieved_from_X_columns(
     )
 
     patched_plots.top_features_by_mean_abs_shap.return_value = ([2, 0], [0.9, 0.1])
-    generate_report(mock_explainer, tmp_path / "r2.html")
+    render_report(mock_explainer, tmp_path / "r2.html")
 
     patched_plots.flag_top_features.assert_called_once_with(["c", "a"])
 
 
 def test_rendering_includes_all_components(mock_explainer, patched_plots, tmp_path):
-    path = generate_report(mock_explainer, tmp_path / "r3.html", title="Test Report")
+    path = render_report(mock_explainer, tmp_path / "r3.html", title="Test Report")
     html = path.read_text(encoding="utf-8")
 
     assert "Test Report" in html
@@ -184,7 +184,7 @@ def test_ethical_flags_included_in_report(mock_explainer, patched_plots, tmp_pat
         },
     ]
 
-    path = generate_report(
+    path = render_report(
         mock_explainer, tmp_path / "r4.html", title="Ethical Flags Test"
     )
     html = path.read_text(encoding="utf-8")
@@ -196,17 +196,17 @@ def test_ethical_flags_included_in_report(mock_explainer, patched_plots, tmp_pat
 
 
 def test_metrics_included_in_report(mock_explainer, patched_plots, tmp_path):
-    path = generate_report(mock_explainer, tmp_path / "r5.html", title="Metrics Test")
+    path = render_report(mock_explainer, tmp_path / "r5.html", title="Metrics Test")
     html = path.read_text(encoding="utf-8")
     assert "Metrics Summary Table" in html
     assert "Accuracy" in html
-    assert "Roc Auc" in html
+    assert "ROC AUC" in html
     assert "0.85" in html
     assert "0.91" in html
 
 
 def test_default_top_n_features_is_10(mock_explainer, patched_plots, tmp_path):
-    generate_report(mock_explainer, tmp_path / "r6.html")
+    render_report(mock_explainer, tmp_path / "r6.html")
     assert patched_plots.shap_bar_html.call_args.kwargs["top_n"] == 10
     assert patched_plots.shap_beeswarm_html.call_args.kwargs["top_n"] == 10
     assert patched_plots.top_features_by_mean_abs_shap.call_args.kwargs["top_n"] == 10
@@ -215,7 +215,7 @@ def test_default_top_n_features_is_10(mock_explainer, patched_plots, tmp_path):
 def test_generated_at_and_version_info_in_report(
     mock_explainer, patched_plots, tmp_path
 ):
-    path = generate_report(
+    path = render_report(
         mock_explainer, tmp_path / "r7.html", title="Version Info Test"
     )
     html = path.read_text(encoding="utf-8")

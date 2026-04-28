@@ -1,3 +1,9 @@
+"""
+Load and preprocess datasets for clinical machine learning tasks.
+This module provides functions to load the dataset, split it into
+training and testing sets, and prepare it for use in machine learning models.
+"""
+
 import pandas as pd
 from pathlib import Path
 from sklearn.model_selection import train_test_split
@@ -14,14 +20,13 @@ TARGET_COLUMN = "Diabetes_binary"
 def load_diabetes_dataset():
     """Load Kaggle diabetes binary classification data from a CSV file and split it into training and testing sets.
 
-    Returns:
-        X_train (pd.DataFrame): Training features.
-        X_test (pd.DataFrame): Testing features.
-        y_train (pd.Series): Training target variable.
-        y_test (pd.Series): Testing target variable.
+    Returns
+    -------
+    tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]
+        A tuple containing the training features, testing features, training labels, and testing labels.
     """
     df = DF.copy()
-    X = df.drop(columns=[TARGET_COLUMN])
+    X = df.drop(columns=TARGET_COLUMN)
     y = df[TARGET_COLUMN]
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, stratify=y, test_size=0.2, random_state=42

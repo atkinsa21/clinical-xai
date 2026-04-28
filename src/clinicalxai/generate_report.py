@@ -15,7 +15,99 @@ from clinicalxai.explainers.base import BaseExplainer
 from clinicalxai.explainers.classifier import ClassifierExplainer
 
 
-def generate_report(
+def get_metrics_labels(explainer: BaseExplainer) -> dict[str, str]:
+    """
+    Get human-readable labels for the metrics in the explainer's metrics dict.
+
+    Parameters
+    ----------
+    explainer : BaseExplainer
+        The explainer instance containing the metrics.
+
+    Returns
+    -------
+    dict[str, str]
+        A dictionary mapping metric keys to human-readable labels.
+    """
+    metric_label_map = {
+        "accuracy": "Accuracy",
+        "precision": "Precision",
+        "recall": "Recall",
+        "f1_score": "F1 Score",
+        "roc_auc": "ROC AUC",
+    }
+    return {
+        metric: metric_label_map.get(metric, metric) for metric in explainer.metrics
+    }
+
+
+def to_html(
+    output_path: str | Path,
+    explainer: ClassifierExplainer,
+    title: str,
+    shap_bar: str,
+    shap_beeswarm: str,
+    shap_waterfall: str,
+    patient_index,
+    confusion_matrix: str,
+    roc_curve: str,
+    ethical_flags: list[dict],
+) -> None:
+    """
+    Render the report HTML from the Jinja2 template using precomputed report components.
+
+    Parameters
+    ----------
+    output_path : str | Path
+        The path where the generated HTML report will be saved.
+    explainer : ClassifierExplainer
+        The fitted ClassifierExplainer instance containing cached results and metrics.
+    title : str
+        The title of the HTML report.
+    shap_bar : str
+        The HTML string for the SHAP bar plot visualization.
+    shap_beeswarm : str
+        The HTML string for the SHAP beeswarm plot visualization.
+    shap_waterfall : str
+        The HTML string for the SHAP waterfall plot visualization.
+    patient_index : int
+        The index of the patient used for the local SHAP waterfall plot.
+    confusion_matrix : str
+        The base64-encoded PNG string for the confusion matrix visualization.
+    roc_curve : str
+        The base64-encoded PNG string for the ROC curve visualization.
+    ethical_flags : list[dict]
+        A list of ethical flags or recommendations based on the top SHAP features.
+    """
+    env = Environment(
+        loader=PackageLoader("clinicalxai", "templates"),
+        autoescape=select_autoescape(["html", "xml"]),
+    )
+    template = env.get_template("report.html")
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    rendered_html = template.render(
+        plotly_js=plots.get_plotlyjs_inline_script(),
+        title=title,
+        generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+        clinicalxai_version=__version__,
+        metrics=explainer.metrics,
+        metric_labels=get_metrics_labels(explainer),
+        shap_bar=shap_bar,
+        shap_beeswarm=shap_beeswarm,
+        shap_waterfall=shap_waterfall,
+        patient_index=patient_index,
+        confusion_matrix=confusion_matrix,
+        roc_curve=roc_curve,
+        ethical_flags=ethical_flags,
+    )
+    output_path.write_text(rendered_html, encoding="utf-8")
+    print(f"Report generated and saved to: {output_path}")
+
+
+def render_report(
     explainer: BaseExplainer,
     output_path: str | Path,
     title: str = "Clinical XAI Report",
@@ -78,22 +170,10 @@ def generate_report(
     top_feature_names = [explainer.X.columns[i] for i in top_features]
     ethical_flags = flag_top_features(top_feature_names)
 
-    # Load Jinja2 template
-    env = Environment(
-        loader=PackageLoader("clinicalxai", "templates"),
-        autoescape=select_autoescape(["html", "xml"]),
-    )
-
-    template = env.get_template("report.html")
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    rendered_html = template.render(
-        plotly_js=plots.get_plotlyjs_inline_script(),
+    to_html(
+        output_path=output_path,
+        explainer=explainer,
         title=title,
-        generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        clinicalxai_version=__version__,
-        metrics=explainer.metrics,
         shap_bar=shap_bar,
         shap_beeswarm=shap_beeswarm,
         shap_waterfall=shap_waterfall,
@@ -102,6 +182,4 @@ def generate_report(
         roc_curve=roc_curve,
         ethical_flags=ethical_flags,
     )
-
-    output_path.write_text(rendered_html, encoding="utf-8")
     return output_path
