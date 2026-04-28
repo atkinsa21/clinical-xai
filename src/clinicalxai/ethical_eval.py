@@ -9,8 +9,10 @@ import re
 _FLAGS: dict[str, dict] = {
     "socioeconomic_factors": {
         "severity": "warning",
-        "description": "Top feature is a measure of socioeconomic status. This may reflect underlying health disparities and could lead to biased predictions.",
-        "mitigation": "Consider removing socioeconomic features or using techniques to mitigate bias, such as reweighting or adversarial training.",
+        "description": "Top feature is a measure of socioeconomic status. This may reflect "
+        "underlying health disparities and could lead to biased predictions.",
+        "mitigation": "Consider removing socioeconomic features or using techniques to mitigate "
+        "bias, such as reweighting or adversarial training.",
         "keywords": [
             "zipcode",
             "income",
@@ -25,8 +27,10 @@ _FLAGS: dict[str, dict] = {
     },
     "proxy_variables": {
         "severity": "warning",
-        "description": "Top feature is a proxy for a protected attribute (e.g., ICD codes, number of visits, healthcare costs).",
-        "mitigation": "Verify the model's reliance on the feature and consider removing it if it's a proxy. Substitute with direct clinical measures where possible.",
+        "description": "Top feature is a proxy for a protected attribute (e.g., ICD codes, "
+        "number of visits, healthcare costs).",
+        "mitigation": "Verify the model's reliance on the feature and consider removing it "
+        "if it's a proxy. Substitute with direct clinical measures where possible.",
         "keywords": [
             "icdcode",
             "numvisits",
@@ -38,7 +42,8 @@ _FLAGS: dict[str, dict] = {
     "sociodemographic_factors": {
         "severity": "warning",
         "description": "Top feature is a sociodemographic factor (e.g., age, sex, race, ethnicity).",
-        "mitigation": "Ensure the model is not unfairly biased against certain groups. Consider stratified performance evaluation and fairness metrics.",
+        "mitigation": "Ensure the model is not unfairly biased against certain groups. "
+        "Consider stratified performance evaluation and fairness metrics.",
         "keywords": ["age", "sex", "gender", "race", "ethnicity", "countryoforigin"],
     },
 }
@@ -46,8 +51,20 @@ _FLAGS: dict[str, dict] = {
 
 def flag_top_features(top_features: Iterable[str]) -> list[dict]:
     """
-    Returns one entry per string-matched feature (lowercase, stripped underscores/hyphens): {feature, category, severity, rationale, mitigation}
+    Returns one entry per string-matched feature (lowercase, stripped underscores/hyphens):
+    {feature, category, severity, rationale, mitigation}
     First matching category wins (one category per feature)
+
+    Parameters
+    ----------
+    top_features : Iterable[str]
+        An iterable of feature names to evaluate.
+
+    Returns
+    -------
+    list[dict]
+        A list of dictionaries, each containing information about a flagged feature,
+        including the feature name, category, severity, rationale, and mitigation strategy.
     """
     flagged_features = []
     for feature in top_features:

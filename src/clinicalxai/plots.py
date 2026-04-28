@@ -32,6 +32,18 @@ def default_patient_index(predictions: np.ndarray, positive_class: int = 1) -> i
     """
     Default patient index for individual explanations. Uses first index
     where prediction is positive, or middle index if no positive predictions.
+
+    Parameters
+    ----------
+    predictions : np.ndarray
+        The predicted class labels for the dataset.
+    positive_class : int, optional
+        The class label considered as positive, by default 1.
+
+    Returns
+    -------
+    int
+        The index of the patient to use for individual explanations.
     """
     positive_indices = np.where(predictions == positive_class)[0]
     if len(positive_indices) > 0:
@@ -45,6 +57,20 @@ def top_features_by_mean_abs_shap(
     """
     Returns (indices, mean_abs_shap_values) of the top features
     for the positive class (descending order).
+
+    Parameters
+    ----------
+    shap_values : shap.Explanation
+        The SHAP values for the dataset.
+    positive_class : int, optional
+        The class label considered as positive, by default 1.
+    top_n : int, optional
+        The number of top features to return, by default 10.
+
+    Returns
+    -------
+    tuple[list[int], list[float]]
+        A tuple containing a list of feature indices and their corresponding mean absolute SHAP values.
     """
     mean_abs_shap = np.abs(shap_values.values[:, :, positive_class]).mean(axis=0)
     feature_indices = np.argsort(mean_abs_shap)[-top_n:][::-1]
@@ -57,6 +83,20 @@ def shap_bar_html(
     """
     Generate HTML for a SHAP summary bar plot of the top features for the positive class.
     Plotly <div> fragment (full_html=False, include_plotlyjs=False) for embedding in the report.
+
+    Parameters
+    ----------
+    shap_values : shap.Explanation
+        The SHAP values for the dataset.
+    positive_class : int, optional
+        The class label considered as positive, by default 1.
+    top_n : int, optional
+        The number of top features to display, by default 10.
+
+    Returns
+    -------
+    str
+        An HTML string containing the Plotly bar plot for the top SHAP features.
     """
     top_indices, mean_abs_shap = top_features_by_mean_abs_shap(
         shap_values, positive_class, top_n
@@ -87,6 +127,16 @@ def _normalize_feature_values(feature_values: np.ndarray) -> np.ndarray:
     """
     Normalize feature values to [0, 1] range for color mapping in the beeswarm plot.
     Handles constant features by returning zeros.
+
+    Parameters
+    ----------
+    feature_values : np.ndarray
+        The raw feature values to normalize.
+
+    Returns
+    -------
+    np.ndarray
+        The normalized feature values in the range [0, 1].
     """
     min_val = np.min(feature_values)
     max_val = np.max(feature_values)
@@ -109,6 +159,24 @@ def shap_beeswarm_html(
     """
     Generate HTML for a SHAP summary beeswarm plot for the positive class.
     Plotly <div> fragment (full_html=False, include_plotlyjs=False) for embedding in the report.
+
+    Parameters
+    ----------
+    shap_values : shap.Explanation
+        The SHAP values for the dataset.
+    X : pd.DataFrame
+        The input features corresponding to the SHAP values, used for coloring the points.
+    positive_class : int, optional
+        The class label considered as positive, by default 1.
+    top_n : int, optional
+        The number of top features to display, by default 10.
+    max_display_samples : int, optional
+        The maximum number of samples to display in the beeswarm plot for performance reasons, by default 2000.
+
+    Returns
+    -------
+    str
+        An HTML string containing the Plotly beeswarm plot for the top SHAP features.
     """
     top_indices, _ = top_features_by_mean_abs_shap(shap_values, positive_class, top_n)
     feature_names = np.asarray(shap_values.feature_names)[top_indices]
@@ -174,6 +242,22 @@ def shap_waterfall_html(
 ) -> str:
     """
     Generate HTML for a SHAP waterfall plot for an individual patient.
+
+    Parameters
+    ----------
+    shap_values : shap.Explanation
+        The SHAP values for the dataset.
+    patient_index : int
+        The index of the patient to explain.
+    positive_class : int, optional
+        The class label considered as positive, by default 1.
+    top_n : int, optional
+        The number of top features to display in the waterfall plot, by default 10.
+
+    Returns
+    -------
+    str
+        An HTML string containing the Plotly waterfall plot for the specified patient.
 
     Raises
     ------
@@ -241,6 +325,18 @@ def confusion_matrix_png(cm: np.ndarray, labels: list[str]) -> str:
     """
     Generate a PNG image of the confusion matrix as a base64-encoded
     data URI for matplotlib heatmap.
+
+    Parameters
+    ----------
+    cm : np.ndarray
+        The confusion matrix values.
+    labels : list[str]
+        The class labels corresponding to the confusion matrix axes.
+
+    Returns
+    -------
+    str
+        A base64-encoded PNG data URI representing the confusion matrix heatmap.
     """
     fig, ax = plt.subplots(figsize=(4, 4))
     sns.heatmap(
@@ -263,6 +359,20 @@ def roc_curve_png(fpr: np.ndarray, tpr: np.ndarray, auc: float) -> str:
     """
     Generate a PNG image of the ROC curve as a base64-encoded data URI
     for matplotlib plot.
+
+    Parameters
+    ----------
+    fpr : np.ndarray
+        The false positive rates for the ROC curve.
+    tpr : np.ndarray
+        The true positive rates for the ROC curve.
+    auc : float
+        The area under the ROC curve (AUC) value.
+
+    Returns
+    -------
+    str
+        A base64-encoded PNG data URI representing the ROC curve plot.
     """
     fig, ax = plt.subplots(figsize=(4, 4))
     sns.lineplot(x=fpr, y=tpr, ax=ax, label=f"AUC = {auc:.2f}")
@@ -278,6 +388,16 @@ def mpl_fig_to_data_uri(fig: plt.Figure) -> str:
     Convert a matplotlib figure to a base64-encoded PNG data URI.
     `plt.close(fig)` in a finally block to ensure resources are released
     even if encoding fails.
+
+    Parameters
+    ----------
+    fig : plt.Figure
+        The matplotlib figure to convert.
+
+    Returns
+    -------
+    str
+        A base64-encoded PNG data URI representing the input matplotlib figure.
     """
     try:
         buffer = BytesIO()
@@ -294,5 +414,10 @@ def get_plotlyjs_inline_script() -> str:
     Full Plotly.js script for inline embedding in the HTML report.
     Wraps `plotly.offline.get_plotlyjs()`; One call per report --
     every fragment uses `include_plotlyjs=False` to avoid duplication.
+
+    Returns
+    -------
+    str
+        The full Plotly.js script as a string for inline embedding in the HTML report.
     """
     return get_plotlyjs()

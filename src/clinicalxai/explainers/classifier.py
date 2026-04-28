@@ -34,6 +34,24 @@ class ClassifierExplainer(BaseExplainer):
         protected_features: list[str] | None = None,
         background: pd.DataFrame | None = None,
     ) -> None:
+        """
+        Initialize the ClassifierExplainer.
+
+        Parameters
+        ----------
+        model : OnnxModel
+            The ONNX model to explain.
+        X : pd.DataFrame
+            The input features for the model.
+        y : pd.Series
+            The true labels for the input features.
+        labels : list[str] | None, optional
+            The labels for the classes, by default None.
+        protected_features : list[str] | None, optional
+            The names of the protected features, by default None.
+        background : pd.DataFrame | None, optional
+            The background data for SHAP explanations, by default None.
+        """
         if len(X) != len(y):
             raise ValueError("Length of X and y must match.")
         self.model = model
@@ -47,10 +65,26 @@ class ClassifierExplainer(BaseExplainer):
 
     @cached_property
     def predictions(self) -> np.ndarray:
+        """
+        Get the predicted class labels from the model.
+
+        Returns
+        -------
+        np.ndarray
+            The predicted class labels as a 1D array.
+        """
         return self.model.predict(self.X)
 
     @cached_property
     def shap_values(self) -> shap.Explanation:
+        """
+        Get the SHAP values for the model predictions.
+
+        Returns
+        -------
+        shap.Explanation
+            The SHAP values for the model predictions.
+        """
         background = (
             self._background
             if self._background is not None
@@ -61,6 +95,14 @@ class ClassifierExplainer(BaseExplainer):
 
     @cached_property
     def metrics(self) -> dict[str, float]:
+        """
+        Get the evaluation metrics for the model predictions.
+
+        Returns
+        -------
+        dict[str, float]
+            A dictionary containing the accuracy, precision, recall, F1 score, and ROC AUC score for the model predictions.
+        """
         y_pred = self.predictions
         y_proba = self._positive_class_probabilities
         return {
@@ -73,10 +115,26 @@ class ClassifierExplainer(BaseExplainer):
 
     @cached_property
     def confusion_matrix(self) -> np.ndarray:
+        """
+        Get the confusion matrix for the model predictions.
+
+        Returns
+        -------
+        np.ndarray
+            The confusion matrix as a 2D array.
+        """
         return sk_confusion_matrix(self.y, self.predictions)
 
     @cached_property
     def roc_curve(self) -> dict[str, np.ndarray]:
+        """
+        Get the ROC curve for the model predictions.
+
+        Returns
+        -------
+        dict[str, np.ndarray]
+            A dictionary containing the false positive rate, true positive rate, and thresholds for the ROC curve.
+        """
         y_proba = self._positive_class_probabilities
         fpr, tpr, thresholds = sk_roc_curve(self.y, y_proba)
         return {"fpr": fpr, "tpr": tpr, "thresholds": thresholds}
@@ -85,5 +143,10 @@ class ClassifierExplainer(BaseExplainer):
     def _positive_class_probabilities(self) -> np.ndarray:
         """
         Get the predicted probabilities for the positive class.
+
+        Returns
+        -------
+        np.ndarray
+            The predicted probabilities for the positive class.
         """
         return self.model.predict_proba(self.X)[:, 1]

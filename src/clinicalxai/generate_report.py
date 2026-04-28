@@ -18,6 +18,16 @@ from clinicalxai.explainers.classifier import ClassifierExplainer
 def get_metrics_labels(explainer: BaseExplainer) -> dict[str, str]:
     """
     Get human-readable labels for the metrics in the explainer's metrics dict.
+
+    Parameters
+    ----------
+    explainer : BaseExplainer
+        The explainer instance containing the metrics.
+
+    Returns
+    -------
+    dict[str, str]
+        A dictionary mapping metric keys to human-readable labels.
     """
     metric_label_map = {
         "accuracy": "Accuracy",
@@ -69,7 +79,6 @@ def to_html(
     ethical_flags : list[dict]
         A list of ethical flags or recommendations based on the top SHAP features.
     """
-
     env = Environment(
         loader=PackageLoader("clinicalxai", "templates"),
         autoescape=select_autoescape(["html", "xml"]),
